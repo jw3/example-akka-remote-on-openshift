@@ -15,7 +15,6 @@ object Boot extends App with LazyLogging {
   implicit val timeout = Timeout(10 seconds)
 
   val svc = system.actorOf(Props[Service], "b")
-  println(svc.path)
 
   Thread.sleep(1000)
 
