@@ -1,47 +1,47 @@
-one:
-  image: wassj/example-akka-remoting:one
-  hostname: one
+a:
+  image: wassj/example-akka-remoting:a
+  hostname: a
   ports:
     - 2551:2551
   extra_hosts:
-    two: 172.17.0.1
-    three: 172.17.0.1
+    b: 172.17.0.1
+    c: 172.17.0.1
   environment:
-    SVC_HOST: one
+    SVC_HOST: a
     SVC_PORT: 2551
-    SVC_B_HOST: two
+    SVC_B_HOST: b
     SVC_B_PORT: 2552
-    SVC_C_HOST: three
+    SVC_C_HOST: c
     SVC_C_PORT: 2553
 
-two:
-  image: wassj/example-akka-remoting:two
-  hostname: two
+b:
+  image: wassj/example-akka-remoting:b
+  hostname: b
   ports:
     - 2552:2552
   extra_hosts:
-    one: 172.17.0.1
-    three: 172.17.0.1
+    a: 172.17.0.1
+    c: 172.17.0.1
   environment:
-    SVC_HOST: two
+    SVC_HOST: b
     SVC_PORT: 2552
-    SVC_A_HOST: one
+    SVC_A_HOST: a
     SVC_A_PORT: 2551
-    SVC_C_HOST: three
+    SVC_C_HOST: c
     SVC_C_PORT: 2553
 
-three:
-  image: wassj/example-akka-remoting:three
-  hostname: three
+c:
+  image: wassj/example-akka-remoting:c
+  hostname: c
   ports:
     - 2553:2553
   extra_hosts:
-    one: 172.17.0.1
-    two: 172.17.0.1
+    a: 172.17.0.1
+    b: 172.17.0.1
   environment:
-    SVC_HOST: three
+    SVC_HOST: c
     SVC_PORT: 2553
-    SVC_A_HOST: one
+    SVC_A_HOST: a
     SVC_A_PORT: 2551
-    SVC_B_HOST: two
+    SVC_B_HOST: b
     SVC_B_PORT: 2552

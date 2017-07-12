@@ -2,9 +2,9 @@ lazy val `example-akka-remoting` =
   project.in(file("."))
   .aggregate(
     `api`,
-    `one`,
-    `two`,
-    `three`
+    `a`,
+    `b`,
+    `c`
   )
   .settings(commonSettings: _*)
   .enablePlugins()
@@ -17,35 +17,35 @@ lazy val `api` =
   )
   .enablePlugins()
 
-lazy val `one` =
-  project.in(file("one"))
+lazy val `a` =
+  project.in(file("a"))
   .dependsOn(`api`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= commonLibraries,
-    version in Docker := "one"
+    version in Docker := "a"
   )
   .enablePlugins(JavaServerAppPackaging, OpenShiftPlugin)
   .settings(dockerSettings: _*)
 
-lazy val `two` =
-  project.in(file("two"))
+lazy val `b` =
+  project.in(file("b"))
   .dependsOn(`api`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= commonLibraries,
-    version in Docker := "two"
+    version in Docker := "b"
   )
   .enablePlugins(JavaServerAppPackaging, OpenShiftPlugin)
   .settings(dockerSettings: _*)
 
-lazy val `three` =
-  project.in(file("three"))
+lazy val `c` =
+  project.in(file("c"))
   .dependsOn(`api`)
   .settings(commonSettings: _*)
   .settings(
     libraryDependencies ++= commonLibraries,
-    version in Docker := "three"
+    version in Docker := "c"
   )
   .enablePlugins(JavaServerAppPackaging, OpenShiftPlugin)
   .settings(dockerSettings: _*)
