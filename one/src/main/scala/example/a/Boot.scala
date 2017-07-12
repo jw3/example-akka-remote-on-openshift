@@ -17,5 +17,5 @@ object Boot extends App with LazyLogging {
 
   Thread.sleep(1000)
 
-  Discover.resolveDependencies.foreach(println)
+  Discover.resolveDependencies.foreach(_._2 ! "hello, from a")
 }
