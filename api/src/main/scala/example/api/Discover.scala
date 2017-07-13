@@ -2,13 +2,14 @@ package example.api
 
 import akka.NotUsed
 import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorRef, ActorRefFactory, ActorSystem, Identify, Props, Stash}
-import akka.pattern.ask
+import akka.pattern.{Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigRenderOptions, ConfigValueFactory}
 import example.api.Protocols.ServiceDef
 import net.ceedubs.ficus.Ficus._
 import spray.json._
 
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -52,7 +53,6 @@ object Discover {
 }
 
 class Discover(name: String)(implicit to: Timeout) extends Actor with Stash with ActorLogging {
-  import context.dispatcher
 
   Discover.serviceDefs(context.system.settings.config).find(_.name == name) match {
     case Some(d) ⇒ self ! d
@@ -65,14 +65,13 @@ class Discover(name: String)(implicit to: Timeout) extends Actor with Stash with
   }
 
   def resolving(d: ServiceDef): Receive = {
-    Discover.resolve(d).onComplete(self ! _)
+    context.actorOf(resolveWithBackoff(d))
 
     {
-      case Success(Some(r: ActorRef)) ⇒
+      case Resolver.Resolved(ref: ActorRef) ⇒
         unstashAll()
-        context.become(resolved(r))
-      case Success(None) ⇒ // backoff
-      case Failure(ex) ⇒ log.error(ex, "failed to resolve service {}", d)
+        context.become(resolved(ref))
+
       case _ ⇒ stash()
     }
   }
@@ -82,4 +81,46 @@ class Discover(name: String)(implicit to: Timeout) extends Actor with Stash with
   }
 
   def receive = ready
+
+  def resolveWithBackoff(d: ServiceDef): Props = BackoffSupervisor.props(
+    Backoff.onFailure(
+      Resolver.props(d),
+      childName = s"${d.name}-resolver",
+      minBackoff = 1 second,
+      maxBackoff = 10 seconds,
+      randomFactor = 0
+    )
+  )
+}
+
+object Resolver {
+  def props(d: ServiceDef)(implicit to: Timeout, ref: ActorRef) = Props(new Resolver(d))
+
+  case object Resolve
+  case class Resolved(ref: ActorRef)
+}
+
+class Resolver(d: ServiceDef)(implicit to: Timeout, ref: ActorRef) extends Actor with ActorLogging {
+  import context.dispatcher
+
+  override def preStart() = context.self.tell(Resolver.Resolve, ref)
+
+  def receive = {
+    case Resolver.Resolve ⇒
+      log.debug("resolving {}", d)
+      Discover.resolve(d).onComplete(self ! _)
+
+    case Success(Some(r: ActorRef)) ⇒
+      log.debug("successfully resolved {}", d)
+      sender ! Resolver.Resolved(r)
+      context.stop(self)
+
+    case Success(None) ⇒
+      log.warning("failed to resolve {}", d)
+      throw new RuntimeException("didnt resolve")
+
+    case Failure(ex) ⇒
+      log.error(ex, "failure resolving {}", d)
+      throw ex
+  }
 }

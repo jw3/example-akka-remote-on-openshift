@@ -14,10 +14,10 @@ object Boot extends App with LazyLogging {
   implicit val materializer = ActorMaterializer()
   implicit val timeout = Timeout(10 seconds)
 
-  val svc = system.actorOf(Props[Service], "c")
+  system.actorOf(Discover.props("a")) ! "hello, from c"
+  system.actorOf(Discover.props("b")) ! "hello, from c"
 
   Thread.sleep(1000)
 
-  system.actorOf(Discover.props("a")) ! "hello, from c"
-  system.actorOf(Discover.props("b")) ! "hello, from c"
+  val svc = system.actorOf(Props[Service], "c")
 }
