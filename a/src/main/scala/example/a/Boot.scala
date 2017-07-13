@@ -17,5 +17,6 @@ object Boot extends App with LazyLogging {
 
   Thread.sleep(1000)
 
-  Discover.resolveDependencies.foreach(_._2 ! "hello, from a")
+  system.actorOf(Discover.props("b")) ! "hello, from a"
+  system.actorOf(Discover.props("c")) ! "hello, from a"
 }
