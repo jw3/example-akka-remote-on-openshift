@@ -14,8 +14,8 @@ object Boot extends App with LazyLogging {
   implicit val materializer = ActorMaterializer()
   implicit val timeout = Timeout(10 seconds)
 
-  system.actorOf(Discover.props("a")) ! "hello, from c"
-  system.actorOf(Discover.props("b")) ! "hello, from c"
+  Discover.dependency("a") ! "hello, from c"
+  Discover.dependency("b") ! "hello, from c"
 
   Thread.sleep(1000)
 
