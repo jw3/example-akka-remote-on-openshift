@@ -1,7 +1,7 @@
 package example.api
 
 import akka.NotUsed
-import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorRef, ActorRefFactory, Identify, Props, Stash}
+import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorRef, ActorRefFactory, Identify, PoisonPill, Props, Stash}
 import akka.pattern.{Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -58,7 +58,7 @@ class Discover(name: String)(implicit to: Timeout) extends Actor with Stash with
   def receive = ready
 
   def resolveWithBackoff(d: ServiceDef): Props = BackoffSupervisor.props(
-    Backoff.onFailure(
+    Backoff.onStop(
       Resolver.props(d),
       childName = "resolver",
       minBackoff = 1 second,
@@ -88,11 +88,12 @@ class Resolver(d: ServiceDef)(implicit to: Timeout, ref: ActorRef) extends Actor
     case Success(Some(r: ActorRef)) ⇒
       log.debug("successfully resolved {}", d)
       sender ! Resolver.Resolved(r)
+      context.parent ! PoisonPill
       context.stop(self)
 
     case Success(None) ⇒
       log.warning("failed to resolve {}", d)
-      throw new RuntimeException("didnt resolve")
+      context.stop(self)
 
     case Failure(ex) ⇒
       log.error(ex, "failure resolving {}", d)
