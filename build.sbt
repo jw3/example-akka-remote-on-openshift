@@ -53,7 +53,7 @@ lazy val `c` =
 
 lazy val commonSettings = Seq(
   organization := "com.ctc.example",
-  version := "0.1",
+  version := "0.1-SNAPSHOT",
 
   scalaVersion := "2.12.2",
   parallelExecution := false,
