@@ -1,7 +1,6 @@
 package example.api
 
 import com.typesafe.config.ConfigFactory
-import example.api.Protocols.ServiceDef
 import org.scalatest.{Matchers, WordSpec}
 
 

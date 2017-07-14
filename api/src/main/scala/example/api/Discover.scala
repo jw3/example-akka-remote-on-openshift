@@ -5,7 +5,6 @@ import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorRef, ActorRefFactory
 import akka.pattern.{AskTimeoutException, Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.typesafe.config.Config
-import example.api.Protocols.ServiceDef
 
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
