@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import example.api.{Discover, Service}
+import example.api.{Discover, Register, Service}
 
 import scala.concurrent.duration.DurationInt
 
@@ -20,4 +20,5 @@ object Boot extends App with LazyLogging {
   Thread.sleep(1000)
 
   val svc = system.actorOf(Props[Service], "c")
+  Register.service("c", svc)
 }

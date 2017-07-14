@@ -83,6 +83,7 @@ lazy val commonLibraries = {
   Seq(
     "com.iheart" %% "ficus" % "1.4.0",
     "io.spray" %% "spray-json" % "1.3.3",
+    "com.codacy" %% "scala-consul" % "1.1.0",
 
     "com.typesafe.akka" %% "akka-actor" % akkaVersion,
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,

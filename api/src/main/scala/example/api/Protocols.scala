@@ -9,4 +9,6 @@ object Protocols {
   object ServiceDef extends DefaultJsonProtocol {
     implicit val format: RootJsonFormat[ServiceDef] = jsonFormat4(ServiceDef.apply)
   }
+
+  case class ServiceReg(name: String)
 }
