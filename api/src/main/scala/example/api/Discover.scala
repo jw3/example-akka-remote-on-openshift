@@ -2,12 +2,11 @@ package example.api
 
 import akka.NotUsed
 import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorRef, ActorRefFactory, Identify, PoisonPill, Props, Stash}
-import akka.pattern.{Backoff, BackoffSupervisor, ask}
+import akka.pattern.{AskTimeoutException, Backoff, BackoffSupervisor, ask}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import example.api.Protocols.ServiceDef
 
-import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
@@ -75,34 +74,37 @@ object Resolver {
   case class Resolved(ref: ActorRef)
 }
 
-class Resolver(d: ServiceDef)(implicit to: Timeout, ref: ActorRef) extends Actor with ActorLogging {
+class Resolver(svc: ServiceDef)(implicit to: Timeout, ref: ActorRef) extends Actor with ActorLogging {
   import context.dispatcher
 
-  override def preStart() = context.self.tell(Resolver.Resolve, ref)
+  val sysname = s"akka.tcp://${svc.system}@${svc.host}:${svc.port}"
+  val fqsname = s"$sysname/user/${svc.name}"
 
   def receive = {
     case Resolver.Resolve ⇒
-      log.debug("resolving {}", d)
-      resolve(d).onComplete(self ! _)
+      log.info("resolving service at {}", fqsname)
+      (context.actorSelection(fqsname) ? Identify(NotUsed)).onComplete(self ! _)
 
-    case Success(Some(r: ActorRef)) ⇒
-      log.debug("successfully resolved {}", d)
-      sender ! Resolver.Resolved(r)
-      context.parent ! PoisonPill
-      context.stop(self)
+    case Success(id: ActorIdentity) ⇒ id.ref match {
+      case Some(idref) ⇒
+        log.debug("successfully resolved {}", svc)
+        sender ! Resolver.Resolved(idref)
+        context.parent ! PoisonPill
+        context.stop(self)
 
-    case Success(None) ⇒
-      log.warning("failed to resolve {}", d)
+      case None ⇒
+        log.warning("failed to resolve {}", svc)
+        context.stop(self)
+    }
+
+    case Failure(_: AskTimeoutException) ⇒
+      log.warning(s"resolving query timed out. is there an actor system running at {}", sysname)
       context.stop(self)
 
     case Failure(ex) ⇒
-      log.error(ex, "failure resolving {}", d)
-      throw ex
+      log.warning("failure {} resolving {}", ex.getMessage, svc)
+      context.stop(self)
   }
 
-  def resolve(svc: ServiceDef): Future[Option[ActorRef]] = {
-    val fqsn = s"akka.tcp://${svc.system}@${svc.host}:${svc.port}/user/${svc.name}"
-    log.info("resolving service at {}", fqsn)
-    (context.actorSelection(fqsn) ? Identify(NotUsed)).mapTo[ActorIdentity].map(_.ref)
-  }
+  override def preStart() = context.self.tell(Resolver.Resolve, ref)
 }
