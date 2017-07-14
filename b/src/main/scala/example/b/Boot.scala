@@ -17,7 +17,7 @@ object Boot extends App with LazyLogging {
   Discover.dependency("a") ! "hello, from b"
   Discover.dependency("c") ! "hello, from b"
 
-  Thread.sleep(1000)
+  Thread.sleep(2000)
 
   val svc = system.actorOf(Props[Service], "b")
 }
